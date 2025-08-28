@@ -1,0 +1,35 @@
+---
+- name: Create Forgejo data directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ forgejo_uid }}"
+    group: "{{ forgejo_gid }}"
+    mode: '0750'
+  loop:
+    - /var/lib/forgejo
+    - /etc/forgejo
+    - /var/lib/postgres
+
+- name: Copy Docker Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /var/lib/forgejo/docker-compose.yml
+    owner: "{{ forgejo_uid }}"
+    group: "{{ forgejo_gid }}"
+    mode: '0644'
+
+- name: Copy Forgejo app.ini configuration
+  ansible.builtin.template:
+    src: app.ini.j2
+    dest: /etc/forgejo/app.ini
+    owner: "{{ forgejo_uid }}"
+    group: "{{ forgejo_gid }}"
+    mode: '0640'
+  notify: Restart Forgejo
+
+- name: Deploy Forgejo with Docker Compose
+  community.docker.docker_compose:
+    project_src: /var/lib/forgejo
+    state: present
+    build: false

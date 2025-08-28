@@ -1,0 +1,21 @@
+[forgejo_servers]
+your_server ansible_host=192.168.1.100 ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+[forgejo_servers:vars]
+# Domain name for Forgejo (e.g., fj.yourdomain.com)
+domain_name=fj.yourdomain.com
+# Forgejo version (updated to latest stable based on docs)
+forgejo_version=12
+# Database settings
+db_type=postgres
+db_name=forgejo
+db_user=forgejo
+db_password=forgejo  # Change to a secure password
+# Ports
+http_port=3000
+ssh_port=222
+# User and group IDs for Forgejo
+forgejo_uid=1000
+forgejo_gid=1000
+# Rootless image (set to true for rootless, false for standard)
+forgejo_rootless=true

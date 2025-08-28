@@ -1,0 +1,6 @@
+---
+- name: Restart Forgejo
+  community.docker.docker_compose:
+    project_src: /var/lib/forgejo
+    state: present
+    restarted: true

@@ -1,0 +1,16 @@
+[server]
+DOMAIN = {{ domain_name }}
+ROOT_URL = https://{{ domain_name }}/
+HTTP_PORT = {{ http_port }}
+SSH_PORT = {{ ssh_port }}
+
+[database]
+DB_TYPE = {{ db_type }}
+HOST = db:5432
+NAME = {{ db_name }}
+USER = {{ db_user }}
+PASSWD = {{ db_password }}
+
+[security]
+INSTALL_LOCK = true
+SECRET_KEY = {{ lookup('ansible.builtin.password', '/tmp/forgejo_secret_key chars=ascii_letters,digits') }}
