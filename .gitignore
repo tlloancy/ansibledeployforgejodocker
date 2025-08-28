@@ -1,3 +1,4 @@
 hosts.ini
 *.ini
 *.vault
+vault.yml
