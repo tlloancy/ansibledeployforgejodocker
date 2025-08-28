@@ -1,4 +1,148 @@
 ---
+- name: Check if Apache is installed
+  ansible.builtin.command: systemctl is-active apache2 || systemctl is-active httpd
+  register: apache_status
+  ignore_errors: true
+  changed_when: false
+
+- name: Check if Nginx is installed
+  ansible.builtin.command: systemctl is-active nginx
+  register: nginx_status
+  ignore_errors: true
+  changed_when: false
+
+- name: Set web server facts
+  ansible.builtin.set_fact:
+    has_apache: "{{ apache_status.rc == 0 }}"
+    has_nginx: "{{ nginx_status.rc == 0 }}"
+
+- name: Install Apache if neither Apache nor Nginx is installed
+  ansible.builtin.package:
+    name: "{{ 'apache2' if ansible_os_family == 'Debian' else 'httpd' }}"
+    state: present
+  when: not has_apache and not has_nginx
+
+- name: Install Nginx if neither Apache nor Nginx is installed
+  ansible.builtin.package:
+    name: nginx
+    state: present
+  when: not has_apache and not has_nginx
+
+- name: Install Certbot and Apache plugin (Debian)
+  ansible.builtin.apt:
+    name:
+      - certbot
+      - python3-certbot-apache
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian" and (has_apache or (not has_apache and not has_nginx))
+
+- name: Install Certbot and Apache plugin (RedHat)
+  ansible.builtin.dnf:
+    name:
+      - certbot
+      - python3-certbot-apache
+    state: present
+  when: ansible_os_family == "RedHat" and (has_apache or (not has_apache and not has_nginx))
+
+- name: Enable Apache modules (mod_proxy, mod_proxy_http, mod_ssl)
+  ansible.builtin.command: a2enmod {{ item }}
+  loop:
+    - proxy
+    - proxy_http
+    - ssl
+  when: ansible_os_family == "Debian" and (has_apache or (not has_apache and not has_nginx))
+  changed_when: true
+  notify: Restart Apache
+
+- name: Enable Apache SSL module (RedHat)
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: "^#LoadModule ssl_module"
+    line: "LoadModule ssl_module modules/mod_ssl.so"
+    state: present
+  when: ansible_os_family == "RedHat" and (has_apache or (not has_apache and not has_nginx))
+  notify: Restart Apache
+
+- name: Configure Apache ports for HTTP and HTTPS (Debian)
+  ansible.builtin.template:
+    src: ports.conf.j2
+    dest: /etc/apache2/ports.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: ansible_os_family == "Debian" and (has_apache or (not has_apache and not has_nginx))
+  notify: Restart Apache
+
+- name: Configure Apache ports for HTTP and HTTPS (RedHat)
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "Listen 80"
+    - "Listen 443"
+    - "Listen 8081"
+    - "Listen 8083"
+  when: ansible_os_family == "RedHat" and (has_apache or (not has_apache and not has_nginx))
+  notify: Restart Apache
+
+- name: Configure Apache for Forgejo (HTTP)
+  ansible.builtin.template:
+    src: fj.conf.j2
+    dest: "{{ '/etc/apache2/sites-available/fj.conf' if ansible_os_family == 'Debian' else '/etc/httpd/conf.d/fj.conf' }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: has_apache or (not has_apache and not has_nginx)
+  notify: Restart Apache
+
+- name: Configure Apache for Forgejo (HTTPS)
+  ansible.builtin.template:
+    src: fj-le-ssl.conf.j2
+    dest: "{{ '/etc/apache2/sites-available/fj-le-ssl.conf' if ansible_os_family == 'Debian' else '/etc/httpd/conf.d/fj-le-ssl.conf' }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: has_apache or (not has_apache and not has_nginx)
+  notify: Restart Apache
+
+- name: Enable Apache site (Debian)
+  ansible.builtin.command: "{{ item }}"
+  loop:
+    - a2ensite fj.conf
+    - a2ensite fj-le-ssl.conf
+  when: ansible_os_family == "Debian" and (has_apache or (not has_apache and not has_nginx))
+  changed_when: true
+  notify: Restart Apache
+
+- name: Configure Nginx for Forgejo (if Nginx is present)
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/fj.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: has_nginx
+  notify: Restart Nginx
+
+- name: Configure Nginx as reverse proxy to Apache (if neither is present)
+  ansible.builtin.template:
+    src: fj-proxy.conf.j2
+    dest: /etc/nginx/conf.d/fj-proxy.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: not has_apache and not has_nginx
+  notify: Restart Nginx
+
+- name: Run Certbot for SSL certificate (Apache)
+  ansible.builtin.command: certbot certonly --webroot -w /var/lib/forgejo -d {{ domain_name }} --non-interactive --agree-tos --email admin@{{ domain_name }}
+  args:
+    creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+  when: has_apache or (not has_apache and not has_nginx)
+  notify: Restart Apache
+
 - name: Create Forgejo data directory
   ansible.builtin.file:
     path: "{{ item }}"

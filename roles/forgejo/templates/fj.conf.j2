@@ -1,0 +1,10 @@
+<VirtualHost *:80>
+    ServerName {{ domain_name }}
+
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:{{ http_port }}/
+    ProxyPassReverse / http://localhost:{{ http_port }}/
+
+    ErrorLog ${APACHE_LOG_DIR}/fj-error.log
+    CustomLog ${APACHE_LOG_DIR}/fj-access.log combined
+</VirtualHost>

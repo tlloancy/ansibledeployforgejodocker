@@ -4,3 +4,15 @@
     project_src: /var/lib/forgejo
     state: present
     restarted: true
+
+- name: Restart Apache
+  ansible.builtin.service:
+    name: "{{ 'apache2' if ansible_os_family == 'Debian' else 'httpd' }}"
+    state: restarted
+    enabled: true
+
+- name: Restart Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+    enabled: true

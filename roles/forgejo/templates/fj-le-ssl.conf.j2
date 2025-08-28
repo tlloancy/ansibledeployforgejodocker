@@ -1,0 +1,29 @@
+<VirtualHost *:443>
+    ServerName {{ domain_name }}
+
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:{{ http_port }}/
+    ProxyPassReverse / http://localhost:{{ http_port }}/
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/{{ domain_name }}/privkey.pem
+
+    ErrorLog ${APACHE_LOG_DIR}/fj-error-ssl.log
+    CustomLog ${APACHE_LOG_DIR}/fj-access-ssl.log combined
+</VirtualHost>
+
+<VirtualHost *:8083>
+    ServerName {{ domain_name }}
+
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:{{ http_port }}/
+    ProxyPassReverse / http://localhost:{{ http_port }}/
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/{{ domain_name }}/privkey.pem
+
+    ErrorLog ${APACHE_LOG_DIR}/fj-error-8083.log
+    CustomLog ${APACHE_LOG_DIR}/fj-access-8083.log combined
+</VirtualHost>

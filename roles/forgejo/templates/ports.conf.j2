@@ -1,0 +1,12 @@
+Listen 80
+<IfModule ssl_module>
+    Listen 443
+</IfModule>
+<IfModule mod_gnutls.c>
+    Listen 443
+</IfModule>
+
+Listen 8081
+<IfModule ssl_module>
+    Listen 8083
+</IfModule>
