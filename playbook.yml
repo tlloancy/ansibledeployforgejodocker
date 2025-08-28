@@ -2,8 +2,6 @@
 - name: Deploy Forgejo on Docker
   hosts: forgejo_servers
   become: true
-  vars_files:
-    - hosts.ini
   roles:
     - docker
     - forgejo
