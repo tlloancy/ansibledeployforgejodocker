@@ -2,6 +2,8 @@
 - name: Deploy Forgejo on Docker
   hosts: forgejo_servers
   become: true
+  vars_files:
+    - vault.yml
   roles:
     - docker
     - forgejo

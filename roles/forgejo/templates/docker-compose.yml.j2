@@ -1,0 +1,47 @@
+networks:
+  forgejo:
+    external: false
+services:
+  server:
+    image: codeberg.org/forgejo/forgejo:{{ forgejo_version }}{% if forgejo_rootless %}-rootless{% endif %}
+
+    container_name: forgejo
+    {% if forgejo_rootless %}
+
+    user: "{{ forgejo_uid }}:{{ forgejo_gid }}"
+    {% endif %}
+
+    environment:
+      - USER_UID={{ forgejo_uid }}
+      - USER_GID={{ forgejo_gid }}
+      - FORGEJO__database__DB_TYPE={{ db_type }}
+      - FORGEJO__database__HOST=db:5432
+      - FORGEJO__database__NAME={{ db_name }}
+      - FORGEJO__database__USER={{ db_user }}
+      - FORGEJO__database__PASSWD={{ db_password }}
+      - FORGEJO__server__DOMAIN={{ domain_name }}
+      - FORGEJO__server__ROOT_URL=https://{{ domain_name }}/
+    restart: always
+    networks:
+      - forgejo
+    volumes:
+      - ./forgejo:/var/lib/gitea
+      - ./conf:/etc/gitea
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "{{ http_port }}:3000"
+      - "{{ ssh_port }}:2222"
+    depends_on:
+      - db
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      - POSTGRES_USER={{ db_user }}
+      - POSTGRES_PASSWORD={{ db_password }}
+      - POSTGRES_DB={{ db_name }}
+    networks:
+      - forgejo
+    volumes:
+      - ./postgres:/var/lib/postgresql/data

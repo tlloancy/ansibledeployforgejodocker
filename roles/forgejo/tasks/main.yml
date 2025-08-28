@@ -46,7 +46,7 @@
   when: ansible_os_family == "RedHat" and (has_apache or (not has_apache and not has_nginx))
 
 - name: Enable Apache modules (mod_proxy, mod_proxy_http, mod_ssl)
-  ansible.builtin.command: a2enmod {{ item }}
+  ansible.builtin.command: /usr/sbin/a2enmod {{ item }}
   loop:
     - proxy
     - proxy_http
@@ -110,8 +110,8 @@
 - name: Enable Apache site (Debian)
   ansible.builtin.command: "{{ item }}"
   loop:
-    - a2ensite fj.conf
-    - a2ensite fj-le-ssl.conf
+    - /usr/sbin/a2ensite fj.conf
+    - /usr/sbin/a2ensite fj-le-ssl.conf
   when: ansible_os_family == "Debian" and (has_apache or (not has_apache and not has_nginx))
   changed_when: true
   notify: Restart Apache
@@ -145,15 +145,13 @@
 
 - name: Create Forgejo data directory
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: /var/lib/forgejo
     state: directory
     owner: "{{ forgejo_uid }}"
     group: "{{ forgejo_gid }}"
     mode: '0750'
-  loop:
-    - /var/lib/forgejo
-    - /etc/forgejo
-    - /var/lib/postgres
+    recurse: true
+  become: true
 
 - name: Copy Docker Compose file
   ansible.builtin.template:
