@@ -7,6 +7,7 @@
       - curl
       - gnupg
       - lsb-release
+      - python3-docker  # Added for Docker Python module
     state: present
     update_cache: true
   when: ansible_os_family == "Debian"
@@ -16,6 +17,7 @@
     name:
       - dnf-plugins-core
       - curl
+      - python3-docker  # Added for Docker Python module
     state: present
   when: ansible_os_family == "RedHat"
 
@@ -58,8 +60,3 @@
     dest: /usr/local/bin/docker-compose
     mode: '0755'
   when: ansible_architecture == "x86_64"
-
-- name: Install Python Docker module
-  ansible.builtin.pip:
-    name: docker
-    state: present
