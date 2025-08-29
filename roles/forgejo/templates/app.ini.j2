@@ -1,16 +1,68 @@
+APP_NAME = Forgejo: Beyond coding. We forge.
+RUN_USER = {{ run_user | default('git') }}
+RUN_MODE = prod
+
+[repository]
+ROOT = /var/lib/gitea/git
+
+[repository.local]
+LOCAL_COPY_PATH = /tmp/gitea/local-repo
+
+[repository.upload]
+TEMP_PATH = /tmp/gitea/uploads
+
 [server]
-DOMAIN = {{ domain_name }}
+APP_DATA_PATH = /var/lib/gitea
+SSH_DOMAIN = {{ domain_name }}
+HTTP_PORT = {{ docker_http_port | default('3000') }}
 ROOT_URL = https://{{ domain_name }}/
-HTTP_PORT = {{ http_port }}
-SSH_PORT = {{ ssh_port }}
+DISABLE_SSH = false
+START_SSH_SERVER = true
+SSH_PORT = {{ docker_ssh_port | default('2222') }}
+SSH_LISTEN_PORT = {{ docker_ssh_port | default('2222') }}
+BUILTIN_SSH_SERVER_USER = {{ run_user | default('git') }}
+LFS_START_SERVER = true
+DOMAIN = {{ domain_name }}
 
 [database]
+PATH = /var/lib/gitea/data/gitea.db
 DB_TYPE = {{ db_type }}
 HOST = db:5432
 NAME = {{ db_name }}
 USER = {{ db_user }}
 PASSWD = {{ db_password }}
+SSL_MODE = disable
+
+[session]
+PROVIDER_CONFIG = /var/lib/gitea/data/sessions
+
+[picture]
+AVATAR_UPLOAD_PATH = /var/lib/gitea/data/avatars
+REPOSITORY_AVATAR_UPLOAD_PATH = /var/lib/gitea/data/repo-avatars
+
+[attachment]
+PATH = /var/lib/gitea/data/attachments
+
+[log]
+ROOT_PATH = /var/lib/gitea/data/log
 
 [security]
 INSTALL_LOCK = true
-SECRET_KEY = {{ lookup('ansible.builtin.password', '/tmp/forgejo_secret_key chars=ascii_letters,digits') }}
+SECRET_KEY = {{ lookup('password', '/tmp/forgejo_secret_key length=32 chars=ascii_letters,digits') }}
+REVERSE_PROXY_LIMIT = 1
+REVERSE_PROXY_TRUSTED_PROXIES = *
+
+[service]
+DISABLE_REGISTRATION = {{ disable_registration | default('true') }}
+REQUIRE_SIGNIN_VIEW = false
+ENABLE_UPDATE_CHECKER = {{ enable_update_checker | default('true') }}
+OFFLINE_MODE = {{ offline_mode | default('true') }}
+DISABLE_GRAVATAR = {{ disable_gravatar | default('true') }}
+ENABLE_OPENID_SIGN_IN = {{ enable_openid_sign_in | default('true') }}
+ENABLE_OPENID_SIGN_UP = {{ enable_openid_sign_up | default('true') }}
+DEFAULT_ALLOW_CREATE_ORGANIZATION = {{ default_allow_create_organization | default('true') }}
+DEFAULT_ENABLE_TIMETRACKING = {{ default_enable_timetracking | default('true') }}
+NO_REPLY_ADDRESS = noreply.{{ domain_name }}
+
+[lfs]
+PATH = /var/lib/gitea/git/lfs

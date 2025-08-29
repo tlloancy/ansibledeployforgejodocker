@@ -26,7 +26,6 @@ services:
       - forgejo
     volumes:
       - ./forgejo:/var/lib/gitea
-      - ./conf:/etc/gitea
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
