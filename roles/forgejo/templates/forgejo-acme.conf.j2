@@ -1,0 +1,9 @@
+<VirtualHost *:80>
+    ServerName {{ exact_domain_name_can_be_a_sub_domain }}
+    DocumentRoot /var/www/html/forgejo
+    <Directory /var/www/html/forgejo/.well-known/acme-challenge>
+        Options None
+        AllowOverride None
+        Require all granted
+    </Directory>
+</VirtualHost>

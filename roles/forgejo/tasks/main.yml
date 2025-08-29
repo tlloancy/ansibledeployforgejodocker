@@ -95,7 +95,90 @@
     group: root
     mode: '0644'
   when: has_apache or (not has_apache and not has_nginx)
-  notify: Restart Apache
+
+- name: Ensure webroot directory for Certbot
+  ansible.builtin.file:
+    path: /var/www/html/forgejo/.well-known/acme-challenge
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  become: true
+  changed_when: false
+  when: has_apache
+
+- name: Disable Apache site (Debian) before ACME challenge
+  ansible.builtin.command: /usr/sbin/a2dissite fj.conf
+  become: true
+  when: ansible_os_family == "Debian" and (has_apache or (not has_apache and not has_nginx))
+  changed_when: true
+  ignore_errors: true
+
+- name: Reload Apache to disable fj.conf
+  ansible.builtin.service:
+    name: apache2
+    state: reloaded
+  become: true
+  when: has_apache
+
+- name: Copy temporary Apache config for ACME challenge
+  ansible.builtin.template:
+    src: forgejo-acme.conf.j2
+    dest: /etc/apache2/sites-available/forgejo-acme.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  when: has_apache
+  changed_when: true
+
+- name: Enable temporary Apache site for ACME challenge
+  ansible.builtin.command: /usr/sbin/a2ensite forgejo-acme.conf
+  become: true
+  when: has_apache
+  changed_when: true
+
+- name: Reload Apache to apply ACME config
+  ansible.builtin.service:
+    name: apache2
+    state: reloaded
+  become: true
+  when: has_apache
+
+- name: Check if LetsEncrypt certificate exists for domain
+  ansible.builtin.stat:
+    path: /etc/letsencrypt/live/{{ exact_domain_name_can_be_a_sub_domain }}/fullchain.pem
+  register: cert_check
+  when: has_apache
+
+- name: Run Certbot for SSL certificate (Apache)
+  ansible.builtin.command:
+    cmd: certbot certonly --webroot -w /var/www/html/forgejo -d {{ exact_domain_name_can_be_a_sub_domain }} --non-interactive --agree-tos --email admin@{{ exact_domain_name_can_be_a_sub_domain }}
+    creates: /etc/letsencrypt/live/{{ exact_domain_name_can_be_a_sub_domain }}/fullchain.pem
+  become: true
+  when: has_apache and not cert_check.stat.exists
+  changed_when: false
+
+- name: Disable temporary Apache site for ACME challenge
+  ansible.builtin.command: /usr/sbin/a2dissite forgejo-acme.conf
+  become: true
+  when: has_apache
+  changed_when: true
+
+- name: Remove temporary Apache config for ACME challenge
+  ansible.builtin.file:
+    path: /etc/apache2/sites-available/forgejo-acme.conf
+    state: absent
+  become: true
+  when: has_apache
+  changed_when: true
+
+- name: Reload Apache to clean up ACME config
+  ansible.builtin.service:
+    name: apache2
+    state: reloaded
+  become: true
+  when: has_apache
 
 - name: Configure Apache for Forgejo (HTTPS)
   ansible.builtin.template:
@@ -135,13 +218,6 @@
     mode: '0644'
   when: not has_apache and not has_nginx
   notify: Restart Nginx
-
-- name: Run Certbot for SSL certificate (Apache)
-  ansible.builtin.command: certbot certonly --webroot -w /var/lib/forgejo -d {{ domain_name }} --non-interactive --agree-tos --email admin@{{ domain_name }}
-  args:
-    creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
-  when: has_apache or (not has_apache and not has_nginx)
-  notify: Restart Apache
 
 - name: Create Forgejo data directory
   ansible.builtin.file:
