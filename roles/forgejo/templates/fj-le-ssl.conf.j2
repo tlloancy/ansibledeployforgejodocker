@@ -14,7 +14,7 @@
 </VirtualHost>
 
 <VirtualHost *:8083>
-    ServerName {{ domain_name }}
+    ServerName {{ exact_domain_name_can_be_a_sub_domain }}
 
     ProxyPreserveHost On
     ProxyPass / http://localhost:{{ http_port }}/

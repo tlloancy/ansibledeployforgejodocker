@@ -1,15 +1,15 @@
 server {
     listen 80;
-    server_name {{ domain_name }};
+    server_name {{ exact_domain_name_can_be_a_sub_domain }};
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name {{ domain_name }};
+    server_name {{ exact_domain_name_can_be_a_sub_domain }};
 
-    ssl_certificate /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ domain_name }}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/{{ exact_domain_name_can_be_a_sub_domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ exact_domain_name_can_be_a_sub_domain }}/privkey.pem;
 
     location / {
         proxy_pass http://localhost:{{ http_port }};

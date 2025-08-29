@@ -13,7 +13,7 @@ TEMP_PATH = /tmp/gitea/uploads
 
 [server]
 APP_DATA_PATH = /var/lib/gitea
-SSH_DOMAIN = {{ domain_name }}
+SSH_DOMAIN = {{ exact_domain_name_can_be_a_sub_domain }}
 HTTP_PORT = {{ docker_http_port | default('3000') }}
 ROOT_URL = https://{{ exact_domain_name_can_be_a_sub_domain }}/
 DISABLE_SSH = false
@@ -22,7 +22,7 @@ SSH_PORT = {{ docker_ssh_port | default('2222') }}
 SSH_LISTEN_PORT = {{ docker_ssh_port | default('2222') }}
 BUILTIN_SSH_SERVER_USER = {{ run_user | default('git') }}
 LFS_START_SERVER = true
-DOMAIN = {{ domain_name }}
+DOMAIN = {{ exact_domain_name_can_be_a_sub_domain }}
 
 [database]
 PATH = /var/lib/gitea/data/gitea.db
