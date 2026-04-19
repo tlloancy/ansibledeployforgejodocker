@@ -105,3 +105,9 @@ ansibledeployforgejodocker/
 - Verify Nginx/Apache status: `systemctl status nginx` or `systemctl status apache2`.
 - Check Certbot certificates: `certbot certificates`.
 - Ensure DNS is set for `domain_name`.
+
+## License
+This project is developed and maintained by **Tlloancy**. 
+It is released under the **Apache License 2.0**. 
+
+Copyright (c) 2026 **Tlloancy**. Attribution to the original author is required for any redistribution or integration.
